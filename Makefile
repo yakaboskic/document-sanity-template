@@ -1,13 +1,12 @@
-.PHONY: help install install-pinned update latex build pdf preview preview-check html word serve clean
+.PHONY: help install install-pinned update latex build pdf preview preview-check html word serve check site clean
 
 VERSION ?=
 
 help:
 	@echo "Targets:"
-	@echo "  install        Pull the latest document-sanity from GitHub main and sync"
-	@echo "                 the venv. Use this by default — document-sanity changes often."
-	@echo "  install-pinned Install strictly from uv.lock (no upgrade). Reproducible / CI."
-	@echo "  update         Alias for 'install' — re-resolve document-sanity to GitHub HEAD."
+	@echo "  install        Install the document-sanity release pinned in pyproject.toml"
+	@echo "  install-pinned Install strictly from uv.lock; fail if it's stale (CI)"
+	@echo "  update         Re-resolve document-sanity after moving its tag in pyproject.toml"
 	@echo "  latex          Generate LaTeX artifacts in out/<version>/latex/ (no PDF compile)"
 	@echo "  pdf            Build + compile to PDF (out/<version>/pdf/main.pdf)"
 	@echo "  preview        Insert/refresh markdown-preview blocks in docs/"
@@ -15,20 +14,23 @@ help:
 	@echo "  html           Emit interactive HTML viewer (out/<version>/html/)"
 	@echo "  word           Build a Word (.docx) document (out/<version>/word/main.docx)"
 	@echo "  serve          Serve the HTML viewer on http://localhost:8000"
-	@echo "  clean          Remove out/"
+	@echo "  check          Build every target and check previews + references (before sharing)"
+	@echo "  site           Every document's HTML, PDF and Word in site/ (what Pages publishes)"
+	@echo "  clean          Remove out/ and site/"
 	@echo ""
 	@echo "Pass VERSION=<ver> to any target for a specific dated version; otherwise"
 	@echo "document-sanity auto-detects the latest src/<ver>/ directory."
 
-# Default install = always pull latest main. `uv sync` alone respects uv.lock,
-# which pins document-sanity to a specific commit and silently skips git updates;
-# `uv lock --upgrade-package` re-resolves the git dep to the current HEAD.
-install: update
-update:
-	uv lock --upgrade-package document-sanity
+# document-sanity is pinned to a release tag in pyproject.toml. To upgrade,
+# change the tag and run `make update` (or `uv lock && uv sync`).
+install:
 	uv sync
 
 install-pinned:
+	uv sync --locked
+
+update:
+	uv lock --upgrade-package document-sanity
 	uv sync
 
 latex:
@@ -59,5 +61,13 @@ serve: html
 	echo "Serving out/$$ver/html/ at http://localhost:8000"; \
 	python3 -m http.server --directory out/$$ver/html 8000
 
+# Every document (or just VERSION): preview --check, PDF, references, HTML,
+# Word + the layout pass. Exits non-zero on anything to fix.
+check:
+	uv run document-sanity check $(VERSION)
+
+site:
+	uv run document-sanity site
+
 clean:
-	rm -rf out/
+	rm -rf out/ site/

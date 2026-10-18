@@ -14,6 +14,9 @@
 # proposal.docx / styles.
 
 metadata:
+  # TEMPLATE: `python init.py` (or `document-sanity init`) sets the title
+  # and authors. The affiliations, abstract and keywords are placeholders
+  # to edit by hand.
   title: "Lunar Regolith Sintering for In-Situ Habitat Printing"
   authors:
     - name: "Principal Investigator"

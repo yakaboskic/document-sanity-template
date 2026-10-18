@@ -3,6 +3,9 @@
 # figures, and tables.
 
 metadata:
+  # TEMPLATE: `python init.py` (or `document-sanity init`) sets the title
+  # and authors. The affiliations, abstract and keywords are placeholders
+  # to edit by hand.
   title: "A Starter Manuscript Built with document-sanity"
   authors:
     - name: "First Author"

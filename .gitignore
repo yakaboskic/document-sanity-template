@@ -1,5 +1,6 @@
 # document-sanity output — regenerated from src/
 out/
+site/
 
 # LaTeX intermediates (in case of direct pdflatex runs outside the builder)
 *.aux
