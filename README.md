@@ -1,12 +1,17 @@
 # Template Repo for a Document Sanity Project
 
 A ready-to-clone GitHub template for documents built with
-[document-sanity](https://github.com/yakaboskic/document-sanity).
-Markdown is the source of truth; one build pipeline produces a
+[document-sanity](https://github.com/yakaboskic/document-sanity), part of
+[Sanitism](https://sanitism.dev): built for autists to communicate their
+work, sanely. Markdown is the source of truth; one build pipeline produces a
 compilable LaTeX tree, a PDF, an interactive HTML viewer, and a Word
 (`.docx`) document — all from the same files. Variables with
 provenance, figures, and tables (markdown / CSV / TSV) all flow
 through every output target identically.
+
+**Live demo:** <https://yakaboskic.github.io/document-sanity-template/>,
+both starters as HTML viewer, PDF and Word, built by this repo's own
+[Pages workflow](.github/workflows/pages.yml).
 
 The template ships with two **starter versions** so the structure
 covers both common shapes of long-form writing:
@@ -24,23 +29,33 @@ Both versions share the same `templates/article.docx`,
 coherent design system. Switch which version is active by passing
 `VERSION=manuscript` or `VERSION=proposal` to any `make` target.
 
-## Clone and rename
+## Start a project
 
-On GitHub, click **Use this template** → **Create a new repository**.
-Locally:
+**No GitHub needed.** One command makes a named copy of this template in a
+plain folder (no clone, no `.git` unless you add `--git`):
+
+```bash
+uvx --from "document-sanity @ git+https://github.com/yakaboskic/document-sanity.git@v0.2.0" \
+  document-sanity init my-paper --title "My paper" --starter manuscript
+cd my-paper && uv sync
+```
+
+**On GitHub**, click **Use this template** → **Create a new repository**,
+clone it, and name it:
 
 ```bash
 git clone https://github.com/<you>/<your-repo> my-paper
 cd my-paper
-
-# Rename the project in pyproject.toml
-sed -i '' 's/document-sanity-template/your-slug/' pyproject.toml     # macOS
-sed -i    's/document-sanity-template/your-slug/' pyproject.toml     # linux
+python init.py          # asks for the name, title, author, which starters to keep
 ```
 
-Decide which starter you're keeping: edit `src/manuscript/manifest.yaml`
-or `src/proposal/manifest.yaml` (or both) with your title, authors,
-sections, etc. Delete the one you don't need, or keep both as siblings.
+Both run the same `document-sanity init`: the project's name goes into
+`pyproject.toml` and the README, the title and author into each kept
+starter's `manifest.yaml` (the lines marked `TEMPLATE:`), the starters you
+don't keep (`--starter manuscript`, `proposal`, or `both`) are dropped, and
+the [agent skill](#agent-skill) is installed. `init.py` removes itself, and
+this repo's Pages workflow, when it's done. Then edit the affiliations,
+abstract and keywords by hand.
 
 ## Prerequisites
 
@@ -49,36 +64,41 @@ sections, etc. Delete the one you don't need, or keep both as siblings.
 - A TeX distribution (MacTeX / TeX Live) with `pdflatex` and `bibtex`
   for PDF builds. Not required for HTML or Word.
 - Optional: [pandoc](https://pandoc.org/) for onboarding Word
-  documents into a new version (see [AGENTS.md](./AGENTS.md)).
+  documents into a new version (the [agent skill](#agent-skill)'s `onboard` mode).
 
 ## Quickstart
 
 ```bash
-make install                          # pull document-sanity from GitHub main + sync venv
+make install                          # install the pinned document-sanity (uv sync)
 make latex                            # LaTeX tree only (no PDF compile)
 make pdf                              # build + compile out/<ver>/pdf/main.pdf
 make html                             # interactive HTML viewer at out/<ver>/html/index.html
 make word                             # Word document at out/<ver>/word/main.docx
 make serve                            # also runs `make html`, opens http://localhost:8000
+make check                            # every target of every document, before you share
 
 # Pass VERSION=<name> to target a specific version (default: latest auto-detected):
 make pdf VERSION=manuscript
 make word VERSION=proposal
 ```
 
-`make install` always pulls the latest `document-sanity` from GitHub
-`main`. Use `make install-pinned` for strictly lockfile-reproducible
-builds (CI).
+`document-sanity` is pinned to a release tag in `pyproject.toml`, so
+every clone builds with the same tool. To upgrade, change the tag to a
+newer [release](https://github.com/yakaboskic/document-sanity/releases)
+and run `make update` (or `uv lock && uv sync`). `make install-pinned`
+installs strictly from `uv.lock` and fails if it's stale (CI).
 
 ## Layout
 
 ```
 .
-├── pyproject.toml               # declares document-sanity as the only runtime dep
-├── Makefile                     # install / latex / pdf / preview / html / word / serve / clean
+├── pyproject.toml               # pins document-sanity (a release tag) as the only runtime dep
+├── Makefile                     # install / latex / pdf / preview / html / word / check / site / …
 ├── README.md                    # you are here
-├── AGENTS.md                    # how to drive this template from an agent
-├── .gitignore                   # ignores out/ and build intermediates
+├── AGENTS.md                    # points agents at the document-sanity skill + project notes
+├── init.py                      # names a "Use this template" copy, then removes itself
+├── .github/workflows/pages.yml  # deploys this template's demo (removed by init.py)
+├── .gitignore                   # ignores out/, site/ and build intermediates
 │
 ├── scripts/
 │   └── finalize_word_layout.py  # post-`make word` pass: table/figure/heading pagination, math size
@@ -126,9 +146,9 @@ builds (CI).
 
 | target           | what it does                                                                  |
 |------------------|-------------------------------------------------------------------------------|
-| `make install`   | Pull latest `document-sanity` from GitHub `main`, sync venv. Use by default.  |
-| `make install-pinned` | Sync from `uv.lock` only. Reproducible / CI.                             |
-| `make update`    | Alias for `install` — re-resolve `document-sanity` to GitHub HEAD.            |
+| `make install`   | Install the `document-sanity` release pinned in `pyproject.toml` (`uv sync`). |
+| `make install-pinned` | Install strictly from `uv.lock`; fail if it's stale. Reproducible / CI.  |
+| `make update`    | Re-resolve `document-sanity` after moving its tag in `pyproject.toml`.        |
 | `make latex`     | Generate LaTeX artifacts in `out/<ver>/latex/` (no PDF compile).              |
 | `make pdf`       | Build + compile to `out/<ver>/pdf/main.pdf`.                                  |
 | `make preview`   | Insert / refresh markdown-preview blocks next to ```latex fences in `docs/`.  |
@@ -136,7 +156,9 @@ builds (CI).
 | `make html`      | Emit interactive HTML viewer at `out/<ver>/html/index.html`. Auto-runs preview. |
 | `make word`      | Build a Word doc at `out/<ver>/word/main.docx`, then apply table and figure pagination rules. Auto-runs preview. |
 | `make serve`     | Build HTML and serve it on `http://localhost:8000`.                           |
-| `make clean`     | Remove `out/`.                                                                |
+| `make check`     | `document-sanity check`: preview check, PDF, references, HTML, Word for every document (or `VERSION`). Exits non-zero on anything to fix. |
+| `make site`      | `document-sanity site`: every document's HTML viewer, PDF and Word in `site/` with an index page. |
+| `make clean`     | Remove `out/` and `site/`.                                                    |
 
 Pass `VERSION=<name>` to any target for a specific version. The
 default is the latest auto-detected `src/<ver>/` directory.
@@ -299,24 +321,58 @@ keep all three happy:
 ## Cutting a new version
 
 ```bash
-# Copy src/manuscript/ (or the latest version) to today's date
-uv run document-sanity new-version --strategy date
+# Snapshot src/manuscript/ into src/MMDDYYYY/ (today's date)
+uv run document-sanity new-version --source manuscript --strategy date
+# or name it for what it is
+uv run document-sanity new-version --source proposal --name nih-resubmission
 ```
 
 Versions are directories under `src/`. The starter ships
-`src/manuscript/` and `src/proposal/`; `new-version` copies the latest
-into `src/MMDDYYYY/` for an archived snapshot, and subsequent
-`new-version` runs increment the date from there. All commands
-auto-detect the latest version; pass `VERSION=<name>` for a specific
-one.
+`src/manuscript/` and `src/proposal/`; `new-version` copies one into a
+new folder, leaving the original as the archived snapshot. Pass
+`--source` (and `VERSION=<name>` to the make targets): without it,
+commands auto-detect the "latest" folder, which is the newest dated one,
+or else the last alphabetically (`proposal` before `manuscript`).
 
-## Onboarding existing documents
+## Agent skill
 
-Got a stack of Word / Markdown / PDF / CSV / figure files you want to
-fold into a new version? See [AGENTS.md](./AGENTS.md) for the
-agent-driven onboarding workflow — pandoc for docx→md, figure
-extraction and renaming, CSV-into-tables placement, manifest
-construction, and the edit / preview / review loop.
+`python init.py` and `document-sanity init` install the document-sanity
+agent skill into `.claude/skills/document-sanity/` (Claude Code:
+`/document-sanity [mode]`) and `.agents/skills/document-sanity/` (other
+agents). Its modes cover onboarding a stack of Word / Markdown / PDF / CSV /
+figure files into a new document (pandoc for docx→md, figure extraction
+and renaming, CSV-into-tables placement, manifest construction), the
+edit / preview / build loop, figures and draw.io, variables, citations, Word
+styles, versions, LaTeX import, `check`, and publishing.
+`uv run document-sanity skills --force` refreshes it after an upgrade.
+[AGENTS.md](./AGENTS.md) points other agents at it and holds this
+project's own notes.
+
+## Publish on GitHub Pages
+
+> A GitHub Pages site is **public**, even when the repository is private.
+
+```bash
+uv run document-sanity pages init       # asks first; → .github/workflows/pages.yml
+uv run document-sanity site             # try locally what the workflow publishes
+```
+
+On every push to `main` the workflow installs the pinned document-sanity,
+runs `document-sanity site` (each document's HTML viewer, PDF and Word,
+plus an index page) and deploys `site/`. PDFs need TeX on the runner: the
+workflow installs a TeX Live subset from Ubuntu's packages (a minute or
+two per run); `pages init --no-pdf` skips it and publishes HTML and Word
+only. A document whose manifest sets `metadata.notice` (CUI, distribution
+statements) is refused unless you pass `--allow-notice`, and stays refused
+on every later build. Name documents to publish only those
+(`pages init manuscript`). Then turn Pages on (Settings → Pages → Source:
+**GitHub Actions**) and push. See the [document-sanity
+README](https://github.com/yakaboskic/document-sanity#publish-on-github-pages)
+for the details.
+
+This repo's own workflow is generated with `--only-repo
+yakaboskic/document-sanity-template`, so copies made with "Use this
+template" don't deploy it (and `init.py` removes it).
 
 ## References
 
