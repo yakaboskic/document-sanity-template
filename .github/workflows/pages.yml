@@ -1,0 +1,66 @@
+# Build every document under src/ and deploy them to GitHub Pages.
+# Written by `document-sanity pages init` (v0.2.0); rerun it with
+# --force to regenerate.
+#
+# A Pages site is PUBLIC, even when this repository is private. Everything
+# `document-sanity site` builds is published: each document's HTML viewer
+# (numbers and their provenance included), its PDF and its Word file.
+# `site` refuses any document whose manifest sets metadata.notice (CUI,
+# distribution statements), so adding one later stops the deploy.
+# Every document under src/ is published, including ones added later.
+#
+# One-time setup: Settings → Pages → Build and deployment → Source: GitHub Actions.
+#
+# PDFs need TeX: the build job installs a TeX Live subset from Ubuntu's
+# packages (about a minute or two per run). If a template \usepackage's
+# something outside it, the PDF step fails with a missing .sty. Rerun with
+# `pages init --no-pdf --force` to publish HTML and Word only.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Deploy from this repository only: forks and template copies skip it.
+    if: github.repository == 'yakaboskic/document-sanity-template'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v6
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+      - name: Install TeX (pdflatex, bibtex)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended lmodern
+      - name: Install document-sanity
+        run: uv sync --locked
+      - name: Build site/
+        run: uv run --no-sync document-sanity site --out site
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
