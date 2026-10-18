@@ -80,9 +80,13 @@ builds (CI).
 ├── AGENTS.md                    # how to drive this template from an agent
 ├── .gitignore                   # ignores out/ and build intermediates
 │
+├── scripts/
+│   └── finalize_word_layout.py  # post-`make word` pass: table/figure/heading pagination, math size
+│
 ├── templates/
 │   ├── article.tex              # LaTeX template — used by manuscript by default
-│   ├── proposal.tex             # LaTeX template — same packages, sets secnumdepth=-1
+│   ├── proposal.tex             # LaTeX template — same packages, sets secnumdepth=-1,
+│   │                            # floats held inside their section (placeins)
 │   ├── article.docx             # Word template: header logo, page-of-N, watermark, named styles
 │   ├── logo.png                 # logo embedded in the docx header
 │   └── watermark.png            # diagonal "DRAFT" watermark, baked into image (not VML)
@@ -130,7 +134,7 @@ builds (CI).
 | `make preview`   | Insert / refresh markdown-preview blocks next to ```latex fences in `docs/`.  |
 | `make preview-check` | Fail if any preview block is missing or stale (CI).                       |
 | `make html`      | Emit interactive HTML viewer at `out/<ver>/html/index.html`. Auto-runs preview. |
-| `make word`      | Build a Word doc at `out/<ver>/word/main.docx`. Auto-runs preview.            |
+| `make word`      | Build a Word doc at `out/<ver>/word/main.docx`, then apply table and figure pagination rules. Auto-runs preview. |
 | `make serve`     | Build HTML and serve it on `http://localhost:8000`.                           |
 | `make clean`     | Remove `out/`.                                                                |
 
@@ -236,6 +240,19 @@ Headers, footers, theme, fonts, and page layout are preserved from
 the template; only the body is replaced with generated content. Per-
 character formatting (`<sup>`, `<sub>`, `**bold**`, *italic*, inline
 `code`) survives table cell boundaries.
+
+The Word target also runs `scripts/finalize_word_layout.py`. It keeps
+table rows together, repeats the first row as a header on later pages,
+and keeps that header with the first data row. Headings stay with the
+following paragraph. Figure images stay with
+their captions, and captions stay on one page when they fit. Native
+equations use the surrounding paragraph's explicit font size, falling
+back to `fontSizes.body` in the exported `styles.yaml`. This prevents
+equations from inheriting a different size from the template. The step
+changes only body pagination and math formatting, preserving template
+defaults, headers and footers. It uses the same explicit or auto-detected
+version as the exporter. Edit this build step rather than manually
+changing files in `out/`.
 
 - **Swap the logo**: replace `templates/logo.png`. The docx
   references it by relationship, so editing the PNG in place picks up
