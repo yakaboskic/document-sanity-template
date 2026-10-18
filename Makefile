@@ -51,6 +51,7 @@ html: preview
 
 word: preview
 	uv run document-sanity word $(if $(VERSION),--version $(VERSION))
+	uv run python scripts/finalize_word_layout.py $(if $(VERSION),--version "$(VERSION)")
 
 serve: html
 	@ver=$${VERSION:-$$(ls -1 out | grep -E '^[0-9]{8}' | sort -r | head -1)}; \
