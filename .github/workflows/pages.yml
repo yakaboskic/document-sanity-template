@@ -1,5 +1,5 @@
 # Build every document under src/ and deploy them to GitHub Pages.
-# Written by `document-sanity pages init` (v0.2.0); rerun it with
+# Written by `document-sanity pages init` (v0.2.1); rerun it with
 # --force to regenerate.
 #
 # A Pages site is PUBLIC, even when this repository is private. Everything
