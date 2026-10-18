@@ -18,7 +18,7 @@ wheels = [
 [[package]]
 name = "document-sanity"
 version = "0.1.0"
-source = { git = "https://github.com/yakaboskic/document-sanity.git?rev=main#9065bd50710d3bc61a54ac77f78d4a1b0bc38b75" }
+source = { git = "https://github.com/yakaboskic/document-sanity.git?rev=main#bd47ef5acaf0a97b370135086369a2030ca2d27b" }
 dependencies = [
     { name = "coolname" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
