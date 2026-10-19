@@ -21,8 +21,7 @@ python init.py          # asks for the name, title, author, and which starters t
 **Just give me a folder.** No GitHub needed; it needs [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uvx --from "document-sanity @ git+https://github.com/yakaboskic/document-sanity.git@v0.2.1" \
-  document-sanity init my-paper --title "My paper"
+uvx document-sanity init my-paper --title "My paper"
 ```
 
 Both run the same `document-sanity init`. The project's name goes into `pyproject.toml`, this README is replaced by a short one for your project, the title and author into each kept starter's `manifest.yaml` (the lines marked `TEMPLATE:`), the starters you don't keep (`--starter manuscript`, `proposal`, or `both`) are dropped, and the [agent skill](#agent-skill) is installed. `init.py` then removes itself and this repo's demo workflow. Edit the affiliations, abstract and keywords by hand.
